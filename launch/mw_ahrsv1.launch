@@ -1,6 +1,10 @@
 <launch>
-  <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1" output="screen">
-    <param name="port" value="/dev/ttyUSB1" />
+  <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1_up" output="screen">
+    <param name="serial_port" value="/dev/recipe.driver.ahrs.up" />
+    <param name="baud_rate" value="115200" />
+  </node>
+  <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1_down" output="screen">
+    <param name="serial_port" value="/dev/recipe.driver.ahrs.down" />
     <param name="baud_rate" value="115200" />
   </node>
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mw_ahrsv1)/rviz_cfg/imu_test.rviz" />

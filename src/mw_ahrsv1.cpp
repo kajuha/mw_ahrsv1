@@ -35,7 +35,6 @@ class MwAhrsV1ForROS
 {
 private:
 	ros::NodeHandle nh_;
-	ros::NodeHandle nh_priv_;
 
 	ros::Publisher imu_data_raw_pub_;
 	ros::Publisher imu_data_pub_;
@@ -44,13 +43,14 @@ private:
 
 	pthread_mutex_t lock_;
 
+	std::string serial_port_;
+
 	std::string parent_frame_id_;
 	std::string frame_id_;
 	double linear_acceleration_stddev_;		// need check.
 	double angular_velocity_stddev_;		// need check.
 
 	//Define constants
-	const char* COMM_PORT = "/dev/ttyUSB1";
 	// 8 bytes ascii floating point * 9 + space * 8 + cr * 1 + lf * 1
 	// 72 + 8 + 1 + 1
 	const static int PACKET_SIZE = 82;
@@ -62,18 +62,20 @@ private:
 
 
 public:
-	MwAhrsV1ForROS(std::string port = "/dev/ttyUSB1", int baud_rate = 115200)
-		: nh_priv_("~")
+	MwAhrsV1ForROS(std::string serial_port, int baud_rate)
+		: nh_("~")
 	{
 		// dependent on user device
-		nh_priv_.setParam("port", port);
-		nh_priv_.setParam("baud_rate", baud_rate);
+		nh_.setParam("serial_port", serial_port);
+		nh_.setParam("baud_rate", baud_rate);
+		
+		serial_port_ = serial_port;
 		
 		// default frame id
-		nh_priv_.param("frame_id", frame_id_, std::string("imu_link"));
+		nh_.param("frame_id", frame_id_, std::string("imu_link"));
 		
 		// for testing the tf
-		nh_priv_.param("parent_frame_id_", parent_frame_id_, std::string("base_link"));
+		nh_.param("parent_frame_id_", parent_frame_id_, std::string("base_link"));
 		
 		// publisher for streaming
 		imu_data_raw_pub_ = nh_.advertise<sensor_msgs::Imu>("imu/data_raw", 1);
@@ -85,6 +87,8 @@ public:
 
 	bool initialize()
 	{
+		const char* COMM_PORT = serial_port_.c_str();
+
 		if(-1 == (fd = open(COMM_PORT, O_RDWR)))
 		{
 			cout << "Error opening port \n";
@@ -267,13 +271,13 @@ int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "mw_ahrsv1");
 
-  std::string port = std::string("/dev/ttyUSB1");
-  int baud_rate    = 115200;
+  std::string serial_port;
+  int baud_rate;
 
-  ros::param::get("~port", port);
+  ros::param::get("~serial_port", serial_port);
   ros::param::get("~baud_rate", baud_rate);
 
-  MwAhrsV1ForROS sensor(port, baud_rate);
+  MwAhrsV1ForROS sensor(serial_port, baud_rate);
 
   if(sensor.initialize() == false)
   {
