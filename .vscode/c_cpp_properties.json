@@ -1,0 +1,31 @@
+{
+    "configurations": [
+      {
+        "browse": {
+          "databaseFilename": "",
+          "limitSymbolsToIncludedHeaders": true
+        },
+        "includePath": [
+          "/home/kajuha/catkin_ws/devel/include/**",
+          "/opt/ros/melodic/include/**",
+          "/home/kajuha/catkin_ws/src/chatterbox/include/**",
+          "/home/kajuha/catkin_ws/src/dummy_cpp/include/**",
+          "/home/kajuha/catkin_ws/src/RPLidar_Hector_SLAM/hector_slam/hector_geotiff/include/**",
+          "/home/kajuha/catkin_ws/src/RPLidar_Hector_SLAM/hector_slam/hector_map_tools/include/**",
+          "/home/kajuha/catkin_ws/src/RPLidar_Hector_SLAM/hector_slam/hector_mapping/include/**",
+          "/home/kajuha/catkin_ws/src/RPLidar_Hector_SLAM/hector_slam/hector_marker_drawing/include/**",
+          "/home/kajuha/catkin_ws/src/labview_ui/include/**",
+          "/home/kajuha/catkin_ws/src/learning_tf/include/**",
+          "/home/kajuha/catkin_ws/src/md_recipelab/include/**",
+          "/home/kajuha/catkin_ws/src/TFmini-ROS/include/**",
+          "/home/kajuha/catkin_ws/src/turtlebot3_simulations/turtlebot3_fake/include/**",
+          "/home/kajuha/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/include/**",
+          "/home/kajuha/catkin_ws/src/turtlebot3/turtlebot3_slam/include/**",
+          "/home/kajuha/catkin_ws/src/joystick_drivers/wiimote/include/**",
+          "/usr/include/**"
+        ],
+        "name": "ROS"
+      }
+    ],
+    "version": 4
+  }
