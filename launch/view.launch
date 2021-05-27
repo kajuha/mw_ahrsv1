@@ -1,5 +1,7 @@
 <launch>
-  <include file="$(find mw_ahrsv1)/launch/base.launch" />
+  <include file="$(find mw_ahrsv1)/launch/base.launch">
+    <arg name="output_type" value="screen"/>
+  </include>
   
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mw_ahrsv1)/rviz/imu_test.rviz" />
 </launch>

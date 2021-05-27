@@ -1,5 +1,7 @@
 <launch>
-  <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1_up" output="screen">
+  <arg name="output_type" default="screen" doc="output type"/>
+  
+  <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1_up" output="$(arg output_type)">
     <param name="serial_port" value="/dev/recipe.driver.ahrs.up" />
     <param name="baud_rate" value="115200" />
     <param name="node_name" value="mw_ahrsv1_up" />
