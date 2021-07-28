@@ -15,7 +15,7 @@
           "/home/kajuha/catkin_ws/src/RPLidar_Hector_SLAM/hector_slam/hector_mapping/include/**",
           "/home/kajuha/catkin_ws/src/RPLidar_Hector_SLAM/hector_slam/hector_marker_drawing/include/**",
           "/home/kajuha/catkin_ws/src/labview_ui/include/**",
-          "/home/kajuha/catkin_ws/src/learning_tf/include/**",
+          "/home/kajuha/catkin_ws/src/test_tf/include/**",
           "/home/kajuha/catkin_ws/src/md_recipelab/include/**",
           "/home/kajuha/catkin_ws/src/TFmini-ROS/include/**",
           "/home/kajuha/catkin_ws/src/turtlebot3_simulations/turtlebot3_fake/include/**",
