@@ -28,7 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(  
   LIBRARIES mw_ahrsv1
   CATKIN_DEPENDS roscpp std_msgs sensor_msgs tf
-  DEPENDS system_lib
+#   DEPENDS system_lib
 )
 
 ################################################################################
