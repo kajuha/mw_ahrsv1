@@ -95,7 +95,6 @@ private:
 	pthread_mutex_t lock_;
 
 	std::string serial_port_;
-	// kajuha 20210302
 	int baud_rate_;
 	queue<unsigned char> que;
 
@@ -120,7 +119,6 @@ public:
 		nh_.setParam("baud_rate", baud_rate);
 		
 		serial_port_ = serial_port;
-		// kajuha 20210302
 		baud_rate_ = baud_rate;
 		
 		// default frame id
@@ -151,7 +149,7 @@ public:
 
 		struct termios newtio;
 		memset(&newtio, 0, sizeof(newtio));
-		// kajuha 20210302
+		
 		#if 1
 		switch(baud_rate_)
 		{
@@ -201,8 +199,7 @@ public:
 		newtio.c_iflag = 0;
 		newtio.c_oflag = 0;
 		newtio.c_lflag = 0;
-		newtio.c_cc[VTIME] = 0; 
-		// kajuha 20210302
+		newtio.c_cc[VTIME] = 0;
 		#if 0
 		newtio.c_cc[VMIN] = 1; 
 		#else
@@ -227,7 +224,6 @@ public:
 
 	bool receiveData()
 	{
-		// kajuha 20210304
 		#if 1
 		int rx_size;
 
@@ -278,7 +274,6 @@ public:
 		#endif
 	}
 
-	// kajuha 20210302
 	enum STATE {FIRST_CR, FIRST_LF,
 		ACC_X, SP_ACC_X, ACC_Y, SP_ACC_Y, ACC_Z, SP_ACC_Z,
 		RATE_X, SP_RATE_X, RATE_Y, SP_RATE_Y, RATE_Z, SP_RATE_Z,
