@@ -2,7 +2,8 @@
   <arg name="message_display" default="screen" doc="output type"/>
   
   <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1_up" output="$(arg message_display)">
-    <param name="serial_port" value="/dev/recipe.driver.ahrs.up" />
+    <!-- <param name="serial_port" value="/dev/recipe.driver.ahrs.up" /> -->
+    <param name="serial_port" value="/dev/recipe.driver.ahrs" />
     <param name="baud_rate" value="115200" />
     <param name="node_name" value="mw_ahrsv1_up" />
   </node>
