@@ -89,15 +89,12 @@ private:
 
 	ros::Publisher imu_data_pub_;
 
-	tf::TransformBroadcaster broadcaster_;
-
 	pthread_mutex_t lock_;
 
 	std::string serial_port_;
 	int baud_rate_;
 	queue<unsigned char> que;
 
-	std::string parent_frame_id_;
 	std::string frame_id_;
 	double linear_acceleration_stddev_;		// need check.
 	double angular_velocity_stddev_;		// need check.
@@ -122,9 +119,6 @@ public:
 		
 		// default frame id
 		nh_.param("frame_id", frame_id_, std::string("imu_link"));
-		
-		// for testing the tf
-		nh_.param("parent_frame_id", parent_frame_id_, std::string("base_link"));
 		
 		// publisher for streaming
 		imu_data_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu", 1);
@@ -727,11 +721,6 @@ public:
 
 		// publish the IMU data
 		imu_data_pub_.publish(imu_data_msg);
-
-		// publish tf
-		broadcaster_.sendTransform(tf::StampedTransform(tf::Transform(tf::createQuaternionFromRPY(roll, pitch, yaw),
-			tf::Vector3(0.0, 0.0, 0.0)),
-			ros::Time::now(), parent_frame_id_, frame_id_));
 	}
 
 	int getQueueSize() {
