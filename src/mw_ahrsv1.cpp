@@ -87,7 +87,6 @@ class MwAhrsV1ForROS
 private:
 	ros::NodeHandle nh_;
 
-	ros::Publisher imu_data_raw_pub_;
 	ros::Publisher imu_data_pub_;
 
 	tf::TransformBroadcaster broadcaster_;
@@ -125,11 +124,10 @@ public:
 		nh_.param("frame_id", frame_id_, std::string("imu_link"));
 		
 		// for testing the tf
-		nh_.param("parent_frame_id_", parent_frame_id_, std::string("base_link"));
+		nh_.param("parent_frame_id", parent_frame_id_, std::string("base_link"));
 		
 		// publisher for streaming
-		imu_data_raw_pub_ = nh_.advertise<sensor_msgs::Imu>("imu/data_raw", 1);
-		imu_data_pub_ = nh_.advertise<sensor_msgs::Imu>("imu/data", 1);
+		imu_data_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu", 1);
 	}
 
 	~MwAhrsV1ForROS()
@@ -672,27 +670,17 @@ public:
 		#endif
 	
 		// Publish ROS msgs.
-		sensor_msgs::Imu imu_data_raw_msg;
 		sensor_msgs::Imu imu_data_msg;
 
 		// Set covariance value of each measurements.
-		imu_data_raw_msg.linear_acceleration_covariance[0] =
-		imu_data_raw_msg.linear_acceleration_covariance[4] =
-		imu_data_raw_msg.linear_acceleration_covariance[8] = -1;
 		imu_data_msg.linear_acceleration_covariance[0] =
 		imu_data_msg.linear_acceleration_covariance[4] =
 		imu_data_msg.linear_acceleration_covariance[8] = -1;
 
-		imu_data_raw_msg.angular_velocity_covariance[0] =
-		imu_data_raw_msg.angular_velocity_covariance[4] =
-		imu_data_raw_msg.angular_velocity_covariance[8] = -1;
 		imu_data_msg.angular_velocity_covariance[0] =
 		imu_data_msg.angular_velocity_covariance[4] =
 		imu_data_msg.angular_velocity_covariance[8] = -1;
 
-		imu_data_raw_msg.orientation_covariance[0] =
-		imu_data_raw_msg.orientation_covariance[4] =
-		imu_data_raw_msg.orientation_covariance[8] = -1;
 		imu_data_msg.orientation_covariance[0] =
 		imu_data_msg.orientation_covariance[4] =
 		imu_data_msg.orientation_covariance[8] = -1;
@@ -710,53 +698,34 @@ public:
 
 		ros::Time now = ros::Time::now();
 
-		imu_data_raw_msg.header.stamp = now;
 		imu_data_msg.header.stamp = now;
 		
-		imu_data_raw_msg.header.frame_id = frame_id_;
 		imu_data_msg.header.frame_id = frame_id_;
 
 		// orientation
-		imu_data_raw_msg.orientation.x = orientation[0];
-		imu_data_raw_msg.orientation.y = orientation[1];
-		imu_data_raw_msg.orientation.z = orientation[2];
-		imu_data_raw_msg.orientation.w = orientation[3];
 		imu_data_msg.orientation.x = orientation[0];
 		imu_data_msg.orientation.y = orientation[1];
 		imu_data_msg.orientation.z = orientation[2];
 		imu_data_msg.orientation.w = orientation[3];
 
 		// original data used the g unit, convert to m/s^2
-		imu_data_raw_msg.linear_acceleration.x = 0;
 		imu_data_msg.linear_acceleration.x = 0;
-		imu_data_raw_msg.linear_acceleration.y = 0;
 		imu_data_msg.linear_acceleration.y = 0;
-		imu_data_raw_msg.linear_acceleration.z = 0;
 		imu_data_msg.linear_acceleration.z = 0;
-		imu_data_raw_msg.linear_acceleration.x = mwAhrsV1.AccX;
 		imu_data_msg.linear_acceleration.x = mwAhrsV1.AccX;
-		imu_data_raw_msg.linear_acceleration.y = mwAhrsV1.AccY;
 		imu_data_msg.linear_acceleration.y = mwAhrsV1.AccY;
-		imu_data_raw_msg.linear_acceleration.z = mwAhrsV1.AccZ;
 		imu_data_msg.linear_acceleration.z = mwAhrsV1.AccZ;
 
 		// imu.gx gy gz.
 		// original data used the degree/s unit, convert to radian/s
-		imu_data_raw_msg.angular_velocity.x = 0;
 		imu_data_msg.angular_velocity.x = 0;
-		imu_data_raw_msg.angular_velocity.y = 0;
 		imu_data_msg.angular_velocity.y = 0;
-		imu_data_raw_msg.angular_velocity.z = 0;
 		imu_data_msg.angular_velocity.z = 0;
-		imu_data_raw_msg.angular_velocity.x = mwAhrsV1.RateRoll * convertor_d2r;
 		imu_data_msg.angular_velocity.x = mwAhrsV1.RateRoll * convertor_d2r;
-		imu_data_raw_msg.angular_velocity.y = mwAhrsV1.RatePitch * convertor_d2r;
 		imu_data_msg.angular_velocity.y = mwAhrsV1.RatePitch * convertor_d2r;
-		imu_data_raw_msg.angular_velocity.z = mwAhrsV1.RateYaw * convertor_d2r;
 		imu_data_msg.angular_velocity.z = mwAhrsV1.RateYaw * convertor_d2r;
 
 		// publish the IMU data
-		imu_data_raw_pub_.publish(imu_data_raw_msg);
 		imu_data_pub_.publish(imu_data_msg);
 
 		// publish tf
