@@ -15,6 +15,8 @@
 #include <iostream>
 #include <queue>
 
+#include <serial/serial.h>
+
 using namespace std;
 
 #pragma pack(1)
@@ -101,7 +103,7 @@ private:
 
 
 	//Define global variables
-	int fd;
+	serial::Serial *ser;
 	unsigned char rx_packet[BUFSIZ];
 	int count = 0;
 
@@ -116,6 +118,7 @@ public:
 		
 		serial_port_ = serial_port;
 		baud_rate_ = baud_rate;
+		this->ser = new serial::Serial();
 		
 		// default frame id
 		nh_.param("frame_id", frame_id_, std::string("imu_link"));
@@ -131,75 +134,21 @@ public:
 	{
 		const char* COMM_PORT = serial_port_.c_str();
 
-		if(-1 == (fd = open(COMM_PORT, O_RDWR)))
-		{
-			cout << "Error opening port \n";
-			cout << "Set port parameters using the following Linux command:\n stty -F /dev/ttyUSB0 115200 raw\n";
-			cout << "You may need to have ROOT access";
+		ser->setPort(serial_port_);
+		ser->setBaudrate(baud_rate_);
+		#define SERIAL_TIMEOUT_MS 3000
+		serial::Timeout to = serial::Timeout::simpleTimeout(SERIAL_TIMEOUT_MS);
+		ser->setTimeout(to);
+
+		ser->open();
+
+		if (!ser->isOpen()) {
+			printf("error opening port[%s] baudrate[%d]\n", COMM_PORT, baud_rate_);
+			printf("you may need to have ROOT access\n");
 			return false;
 		}
 
-		struct termios newtio;
-		memset(&newtio, 0, sizeof(newtio));
-		
-		#if 1
-		switch(baud_rate_)
-		{
-			case 921600:
-				newtio.c_cflag = B921600;
-				break;
-			case 576000:
-				newtio.c_cflag = B576000;
-				break;
-			case 500000:
-				newtio.c_cflag = B500000;
-				break;
-			case 460800:
-				newtio.c_cflag = B460800;
-				break;
-			case 230400:
-				newtio.c_cflag = B230400;
-				break;
-			case 115200:
-				newtio.c_cflag = B115200;
-				break;
-			case 57600:
-				newtio.c_cflag = B57600;
-				break;
-			case 38400:
-				newtio.c_cflag = B38400;
-				break;
-			case 19200:
-				newtio.c_cflag = B19200;
-				break;
-			case 9600:
-				newtio.c_cflag = B9600;
-				break;
-			case 4800:
-				newtio.c_cflag = B4800;
-				break;
-			default:
-				ROS_ERROR_STREAM("Unsupported baud rate!");
-				exit(0);
-		}
-		#else
-		newtio.c_cflag = B115200;
-		#endif
-		newtio.c_cflag |= CS8;
-		newtio.c_cflag |= CLOCAL;
-		newtio.c_cflag |= CREAD;
-		newtio.c_iflag = 0;
-		newtio.c_oflag = 0;
-		newtio.c_lflag = 0;
-		newtio.c_cc[VTIME] = 0;
-		#if 0
-		newtio.c_cc[VMIN] = 1; 
-		#else
-		newtio.c_cc[VMIN] = 0;
-		#endif
-
-		tcflush(fd, TCIOFLUSH);
-		tcsetattr(fd, TCSANOW, &newtio);
+		ser->flush();
 
 		cout << "MW-AHRSv1 communication port is ready\n";
 
@@ -210,7 +159,7 @@ public:
 
 	void closeSensor()
 	{
-		close(fd);
+		ser->close();
 		cout << "Closing MW-AHRSv1 Sensor" << endl;
 	}
 
@@ -221,7 +170,7 @@ public:
 
 		memset(rx_packet, '\0', sizeof(rx_packet));
 
-		rx_size = read(fd, rx_packet, BUFSIZ);
+		rx_size = ser->read(rx_packet, ser->available());
 
 		for (int i=0; i<rx_size; i++) {
 			que.push(rx_packet[i]);
@@ -278,6 +227,7 @@ public:
 		int rx_size;
 		short header;
 		short check_sum;
+		static int count = 0;
 
 		#if 1
 		switch (state) {
@@ -286,7 +236,7 @@ public:
 					if (que.front() == RX_CR_VAL) {
 						state = FIRST_LF;
 					} else {
-						printf("%s : FIRST_CR not Match \n", node_name.c_str());
+						printf("%s : FIRST_CR not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -297,7 +247,7 @@ public:
 					if (que.front() == RX_LF_VAL) {
 						state = ACC_X;
 					} else {
-						printf("%s : FIRST_LF not Match \n", node_name.c_str());
+						printf("%s : FIRST_LF not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -320,7 +270,7 @@ public:
 						packet[SP_ACC_X_IDX] = que.front();
 						state = ACC_Y;
 					} else {
-						printf("%s : SP_ACC_X not Match \n", node_name.c_str());
+						printf("%s : SP_ACC_X not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -343,7 +293,7 @@ public:
 						packet[SP_ACC_Y_IDX] = que.front();
 						state = ACC_Z;
 					} else {
-						printf("%s : SP_ACC_Y not Match \n", node_name.c_str());
+						printf("%s : SP_ACC_Y not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -366,7 +316,7 @@ public:
 						packet[SP_ACC_Z_IDX] = que.front();
 						state = RATE_X;
 					} else {
-						printf("%s : SP_ACC_Z not Match \n", node_name.c_str());
+						printf("%s : SP_ACC_Z not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -389,7 +339,7 @@ public:
 						packet[SP_RATE_X_IDX] = que.front();
 						state = RATE_Y;
 					} else {
-						printf("%s : SP_RATE_X not Match \n", node_name.c_str());
+						printf("%s : SP_RATE_X not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -412,7 +362,7 @@ public:
 						packet[SP_RATE_Y_IDX] = que.front();
 						state = RATE_Z;
 					} else {
-						printf("%s : SP_RATE_Y not Match \n", node_name.c_str());
+						printf("%s : SP_RATE_Y not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -435,7 +385,7 @@ public:
 						packet[SP_RATE_Z_IDX] = que.front();
 						state = DEG_X;
 					} else {
-						printf("%s : SP_RATE_Z not Match \n", node_name.c_str());
+						printf("%s : SP_RATE_Z not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -458,7 +408,7 @@ public:
 						packet[SP_DEG_X_IDX] = que.front();
 						state = DEG_Y;
 					} else {
-						printf("%s : SP_DEG_X not Match \n", node_name.c_str());
+						printf("%s : SP_DEG_X not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -481,7 +431,7 @@ public:
 						packet[SP_DEG_Y_IDX] = que.front();
 						state = DEG_Z;
 					} else {
-						printf("%s : SP_DEG_Y not Match \n", node_name.c_str());
+						printf("%s : SP_DEG_Y not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -504,7 +454,7 @@ public:
 						packet[CR_IDX] = que.front();
 						state = LF;
 					} else {
-						printf("%s : CR not Match \n", node_name.c_str());
+						printf("%s : CR not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -516,7 +466,7 @@ public:
 						packet[LF_IDX] = que.front();
 						state = OK;
 					} else {
-						printf("%s : LF not Match \n", node_name.c_str());
+						printf("%s : LF not Match(%d)\n", node_name.c_str(), count++);
 						state = FIRST_CR;
 					}
 					que.pop();
@@ -546,7 +496,7 @@ public:
 
 						state = FUNCTION;
 					} else {
-						printf("%s : ID not Match \n", node_name.c_str());
+						printf("%s : ID not Match(%d)\n", node_name.c_str(), count++);
 						state = ADDRESS;
 					}
 					que.pop();
@@ -561,7 +511,7 @@ public:
 
 						state = COUNT;
 					} else {
-						printf("%s : FUNCTION not Match : 0x%02x \n", node_name.c_str(), que.front());
+						printf("%s : FUNCTION not Match(%d): 0x%02x \n", node_name.c_str(), count++, que.front());
 						state = ADDRESS;
 					}
 					que.pop();
@@ -576,7 +526,7 @@ public:
 
 						state = VALUE;
 					} else {
-						printf("%s : LENGTH not Match \n", node_name.c_str());
+						printf("%s : LENGTH not Match(%d)\n", node_name.c_str(), count++);
 						state = ADDRESS;
 					}
 					que.pop();
