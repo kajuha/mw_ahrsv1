@@ -166,11 +166,14 @@ public:
 	bool receiveData()
 	{
 		#if 1
-		int rx_size;
+		static int rx_size;
 
 		memset(rx_packet, '\0', sizeof(rx_packet));
 
-		rx_size = ser->read(rx_packet, ser->available());
+		rx_size = ser->available();
+		if (rx_size) {
+			rx_size = ser->read(rx_packet, rx_size);
+		}
 
 		for (int i=0; i<rx_size; i++) {
 			que.push(rx_packet[i]);
