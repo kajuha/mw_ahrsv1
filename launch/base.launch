@@ -2,9 +2,10 @@
   <arg name="message_display" default="screen" doc="output type"/>
   <arg name="frame_id" default="imu_link" doc="frame_id"/>
   <arg name="parent_frame_id" default="base_link" doc="parent_frame_id"/>
+  <arg name="serial_port" default="/dev/recipe.driver.ahrs" doc="serial_port"/>
   
   <node pkg="mw_ahrsv1" type="mw_ahrsv1" name="mw_ahrsv1" output="$(arg message_display)">
-    <param name="serial_port" value="/dev/recipe.driver.ahrs" />
+    <param name="serial_port" value="$(arg serial_port)" />
     <param name="baud_rate" value="115200" />
     <param name="node_name" value="mw_ahrsv1" />
     <param name="frame_id" value="$(arg frame_id)" />
