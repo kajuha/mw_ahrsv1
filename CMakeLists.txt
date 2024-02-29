@@ -1,74 +1,52 @@
-################################################################################
-# CMake
-################################################################################
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(mw_ahrsv1)
 
-################################################################################
-# Packages
-################################################################################
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  sensor_msgs
-  tf
-  serial
-)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
-################################################################################
-# Declare ROS messages, services and actions
-################################################################################
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-################################################################################
-# Declare ROS dynamic reconfigure parameters
-################################################################################
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-################################################################################
-# Catkin specific configuration
-################################################################################
-catkin_package(  
-  LIBRARIES mw_ahrsv1
-  CATKIN_DEPENDS roscpp std_msgs sensor_msgs tf
-#   DEPENDS system_lib
-)
-
-################################################################################
-# Build
-################################################################################
-include_directories(  
-  ${catkin_INCLUDE_DIRS}
-)
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SERIAL libserial)
+# uncomment the following section in order to fill in
+# further dependencies manually.
+# find_package(<dependency> REQUIRED)
 
 add_executable(mw_ahrsv1 src/mw_ahrsv1.cpp)
-add_dependencies(mw_ahrsv1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(mw_ahrsv1 ${catkin_LIBRARIES})
 
-# I knew the REP0003(http://www.ros.org/reps/rep-0003.html#c),
-# but the code of "mw_ahrsv1" must compile with C++11.
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+ament_target_dependencies(mw_ahrsv1 rclcpp std_msgs sensor_msgs SERIAL)
 
+install(TARGETS
+  mw_ahrsv1
+  DESTINATION lib/${PROJECT_NAME})
 
-################################################################################
-# Install
-################################################################################
-install(TARGETS mw_ahrsv1
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME})
 
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  #set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-install(DIRECTORY launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-install(DIRECTORY rviz_cfg
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-################################################################################
-# Test
-#############################################################################
+ament_package()
