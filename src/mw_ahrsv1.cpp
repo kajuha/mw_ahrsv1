@@ -114,7 +114,7 @@ public:
     baud_rate_ = baud_rate;
     // this->ser = new serial::Serial();
     this->ser = new LibSerial::SerialPort();
-    
+
     // publisher for streaming
     imu_data_pub_ = node->create_publisher<sensor_msgs::msg::Imu>("/imu", 1);
   }
@@ -174,6 +174,17 @@ public:
     cout << "Closing MW-AHRSv1 Sensor" << endl;
   }
 
+  bool requestData()
+  {
+    // const uint8_t tx_once[] = "ss=7\r\n";
+    const std::string tx_once = "ss=7\r\n";
+
+    // ser->write(tx_once, sizeof(tx_once));
+    ser->Write(tx_once);
+
+    return true;
+  }
+
   bool receiveData()
   {
     #if 1
@@ -200,9 +211,9 @@ public:
     static int err_cnt = 0;
     short header;
     short check_sum;
-    
+
     // pthread_mutex_lock(&lock_);
-  
+
     // memset(rx_packet, '\0', sizeof(rx_packet));
     int recv_size = read(fd, rx_packet, PACKET_SIZE);
     #if 0
@@ -225,7 +236,7 @@ public:
 
       return false;
     }
-    
+
     publishTopic();
 
     // pthread_mutex_unlock(&lock_);
@@ -237,7 +248,7 @@ public:
   enum STATE {FIRST_CR, FIRST_LF,
     ACC_X, SP_ACC_X, ACC_Y, SP_ACC_Y, ACC_Z, SP_ACC_Z,
     RATE_X, SP_RATE_X, RATE_Y, SP_RATE_Y, RATE_Z, SP_RATE_Z,
-    DEG_X, SP_DEG_X, DEG_Y, SP_DEG_Y, DEG_Z, SP_DEG_Z, 
+    DEG_X, SP_DEG_X, DEG_Y, SP_DEG_Y, DEG_Z, SP_DEG_Z,
     CR, LF,
     OK};
   bool parseData() {
@@ -495,7 +506,7 @@ public:
         publishTopic(packet);
 
         memset(packet, '\0', RX_SIZE);
-        
+
         state = ACC_X;
 
         break;
@@ -577,7 +588,7 @@ public:
           if (!(crc16hi == packet[RX_SIZE-2] && crc16lo == packet[RX_SIZE-1])) {
             cout << node_name << " : CRC Not Match !!!" << endl;
             memset(packet, '\0', RX_SIZE);
-          
+
             state = ADDRESS;
 
             return false;
@@ -591,7 +602,7 @@ public:
         publishTopic(packet);
 
         memset(packet, '\0', RX_SIZE);
-        
+
         state = ADDRESS;
 
         return true;
@@ -603,7 +614,7 @@ public:
         break;
     }
     #endif
-    
+
     return false;
   }
 
@@ -616,9 +627,9 @@ public:
       printf("%02x", packet[i]);
     }
     printf("\n");
-    #endif 
-    sscanf((char*)packet, "%8f %8f %8f %8f %8f %8f %8f %8f %8f%c%c", &mwAhrsV1.AccX, &mwAhrsV1.AccY, &mwAhrsV1.AccZ, 
-                                    &mwAhrsV1.RateRoll, &mwAhrsV1.RatePitch, &mwAhrsV1.RateYaw, 
+    #endif
+    sscanf((char*)packet, "%8f %8f %8f %8f %8f %8f %8f %8f %8f%c%c", &mwAhrsV1.AccX, &mwAhrsV1.AccY, &mwAhrsV1.AccZ,
+                                    &mwAhrsV1.RateRoll, &mwAhrsV1.RatePitch, &mwAhrsV1.RateYaw,
                                     &mwAhrsV1.DegRoll, &mwAhrsV1.DegPitch, &mwAhrsV1.DegYaw,
                                     &mwAhrsV1.cr, &mwAhrsV1.lf);
 
@@ -631,7 +642,7 @@ public:
     cout << "Rates [deg/sec]: " << fixed << setprecision(3) << setw(8) << mwAhrsV1.RateRoll << " " << setw(8) << mwAhrsV1.RatePitch << " " << setw(8) << mwAhrsV1.RateYaw << " ";
     cout << "Attitude  [deg]: " << fixed << setprecision(3) << setw(8) << mwAhrsV1.DegRoll << " " << setw(8) << mwAhrsV1.DegPitch << " " << setw(8) << mwAhrsV1.DegYaw << " ";
     #endif
-  
+
     // Publish ROS msgs.
     sensor_msgs::msg::Imu imu_data_msg;
 
@@ -665,7 +676,7 @@ public:
     rclcpp::Time now = rclcpp::Clock().now();
 
     imu_data_msg.header.stamp = now;
-    
+
     imu_data_msg.header.frame_id = frame_id_;
 
     // orientation
@@ -708,6 +719,7 @@ int main(int argc, char* argv[]) {
 
   std::string serial_port;
   int baud_rate;
+  int tx_once;
 
   rclcpp::Parameter param_serial_port = node->get_parameter("serial_port");
   serial_port = param_serial_port.as_string();
@@ -715,6 +727,8 @@ int main(int argc, char* argv[]) {
   baud_rate = param_baud_rate.as_int();
   rclcpp::Parameter param_node_name = node->get_parameter("node_name");
   node_name = param_node_name.as_string();
+  rclcpp::Parameter param_tx_once = node->get_parameter("tx_once");
+  tx_once = param_tx_once.as_int();
 
   RCLCPP_INFO(node->get_logger(), "%s, %d, %s", serial_port.c_str(), baud_rate, node_name.c_str());
 
@@ -730,6 +744,10 @@ int main(int argc, char* argv[]) {
   }
 
   rclcpp::Rate r(1000);
+
+  if (tx_once) {
+    sensor.requestData();
+  }
 
 #define STEP_TIME 1.0
   double time_cur = rclcpp::Clock().now().seconds();
