@@ -101,14 +101,19 @@ private:
 
   //Define global variables
   // serial::Serial *ser;
+  LibSerial::SerialPort *ser;
   unsigned char rx_packet[BUFSIZ];
+  std::string rx_string;
   int count = 0;
 
 
 public:
   MwAhrsV1ForROS(rclcpp::Node::SharedPtr node, std::string serial_port, int baud_rate)
   {
+    serial_port_ = serial_port;
+    baud_rate_ = baud_rate;
     // this->ser = new serial::Serial();
+    this->ser = new LibSerial::SerialPort();
     
     // publisher for streaming
     imu_data_pub_ = node->create_publisher<sensor_msgs::msg::Imu>("/imu", 1);
@@ -122,10 +127,22 @@ public:
     const char* COMM_PORT = serial_port_.c_str();
 
     // ser->setPort(serial_port_);
+    ser->Open(serial_port_);
     // ser->setBaudrate(baud_rate_);
-    #define SERIAL_TIMEOUT_MS 3000
+    switch (baud_rate_) {
+      case 115200:
+        ser->SetBaudRate(LibSerial::BaudRate::BAUD_115200);
+        break;
+      default:
+        printf("F:%s, L:%d, unknown case(%dd)\n", __FUNCTION__, __LINE__, baud_rate_);
+        exit(-1);
+    }
+    // #define SERIAL_TIMEOUT_MS 3000
     // serial::Timeout to = serial::Timeout::simpleTimeout(SERIAL_TIMEOUT_MS);
     // ser->setTimeout(to);
+    #define SERIAL_TIMEOUT_MS 3000
+    #define MS_TO_DECISEC(x) (x/100)
+    ser->SetVTime(MS_TO_DECISEC(SERIAL_TIMEOUT_MS));
 
     // ser->open();
 
@@ -134,8 +151,14 @@ public:
     //   printf("you may need to have ROOT access\n");
     //   return false;
     // }
+    if (!ser->IsOpen()) {
+      printf("error opening port[%s] baudrate[%d]\n", COMM_PORT, baud_rate_);
+      printf("you may need to have ROOT access\n");
+      return false;
+    }
 
     // ser->flush();
+    ser->FlushIOBuffers();
 
     cout << "MW-AHRSv1 communication port is ready\n";
 
@@ -147,6 +170,7 @@ public:
   void closeSensor()
   {
     // ser->close();
+    ser->Close();
     cout << "Closing MW-AHRSv1 Sensor" << endl;
   }
 
@@ -158,9 +182,14 @@ public:
     memset(rx_packet, '\0', sizeof(rx_packet));
 
     // rx_size = ser->available();
+    rx_size = ser->GetNumberOfBytesAvailable();
     // if (rx_size) {
     //   rx_size = ser->read(rx_packet, rx_size);
     // }
+    if (rx_size) {
+      ser->Read(rx_string, rx_size, SERIAL_TIMEOUT_MS);
+      memcpy(rx_packet, rx_string.c_str(), rx_size);
+    }
 
     for (int i=0; i<rx_size; i++) {
       que.push(rx_packet[i]);
