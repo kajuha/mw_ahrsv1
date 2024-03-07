@@ -115,6 +115,9 @@ public:
     // this->ser = new serial::Serial();
     this->ser = new LibSerial::SerialPort();
 
+    // default frame id
+    frame_id_ = node->get_parameter("frame_id").as_string();
+
     // publisher for streaming
     imu_data_pub_ = node->create_publisher<sensor_msgs::msg::Imu>("/imu", 1);
   }
