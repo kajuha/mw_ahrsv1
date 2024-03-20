@@ -17,18 +17,16 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SERIAL libserial)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(serial REQUIRED)
 
 add_executable(mw_ahrsv1 src/mw_ahrsv1.cpp)
-
-ament_target_dependencies(mw_ahrsv1 rclcpp std_msgs sensor_msgs SERIAL)
+ament_target_dependencies(mw_ahrsv1 rclcpp std_msgs sensor_msgs serial)
 
 install(TARGETS
   mw_ahrsv1

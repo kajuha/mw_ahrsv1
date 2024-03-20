@@ -14,7 +14,7 @@
 #include <iostream>
 #include <queue>
 
-#include <libserial/SerialPort.h>
+#include <serial/serial.h>
 
 using namespace std;
 
@@ -75,9 +75,9 @@ typedef struct _MwAhrsV1 {
 #define CR_SIZE 1
 #define LF_SIZE 1
 
-#define RX_CR_VAL '\r'	// 0x0D
-#define RX_LF_VAL '\n'	// 0x0a
-#define RX_SP_VAL ' '	// 0x20
+#define RX_CR_VAL '\r' // 0x0D
+#define RX_LF_VAL '\n' // 0x0a
+#define RX_SP_VAL ' ' // 0x20
 
 #define RX_SIZE 82
 
@@ -95,15 +95,13 @@ private:
   queue<unsigned char> que;
 
   std::string frame_id_;
-  double linear_acceleration_stddev_;		// need check.
-  double angular_velocity_stddev_;		// need check.
+  double linear_acceleration_stddev_;
+  double angular_velocity_stddev_;
 
 
   //Define global variables
-  // serial::Serial *ser;
-  LibSerial::SerialPort *ser;
+  serial::Serial *ser;
   unsigned char rx_packet[BUFSIZ];
-  std::string rx_string;
   int count = 0;
 
 
@@ -112,8 +110,7 @@ public:
   {
     serial_port_ = serial_port;
     baud_rate_ = baud_rate;
-    // this->ser = new serial::Serial();
-    this->ser = new LibSerial::SerialPort();
+    this->ser = new serial::Serial();
 
     // default frame id
     frame_id_ = node->get_parameter("frame_id").as_string();
@@ -129,39 +126,21 @@ public:
   {
     const char* COMM_PORT = serial_port_.c_str();
 
-    // ser->setPort(serial_port_);
-    ser->Open(serial_port_);
-    // ser->setBaudrate(baud_rate_);
-    switch (baud_rate_) {
-      case 115200:
-        ser->SetBaudRate(LibSerial::BaudRate::BAUD_115200);
-        break;
-      default:
-        printf("F:%s, L:%d, unknown case(%dd)\n", __FUNCTION__, __LINE__, baud_rate_);
-        exit(-1);
-    }
-    // #define SERIAL_TIMEOUT_MS 3000
-    // serial::Timeout to = serial::Timeout::simpleTimeout(SERIAL_TIMEOUT_MS);
-    // ser->setTimeout(to);
+    ser->setPort(serial_port_);
+    ser->setBaudrate(baud_rate_);
     #define SERIAL_TIMEOUT_MS 3000
-    #define MS_TO_DECISEC(x) (x/100)
-    ser->SetVTime(MS_TO_DECISEC(SERIAL_TIMEOUT_MS));
+    serial::Timeout to = serial::Timeout::simpleTimeout(SERIAL_TIMEOUT_MS);
+    ser->setTimeout(to);
 
-    // ser->open();
+    ser->open();
 
-    // if (!ser->isOpen()) {
-    //   printf("error opening port[%s] baudrate[%d]\n", COMM_PORT, baud_rate_);
-    //   printf("you may need to have ROOT access\n");
-    //   return false;
-    // }
-    if (!ser->IsOpen()) {
+    if (!ser->isOpen()) {
       printf("error opening port[%s] baudrate[%d]\n", COMM_PORT, baud_rate_);
       printf("you may need to have ROOT access\n");
       return false;
     }
 
-    // ser->flush();
-    ser->FlushIOBuffers();
+    ser->flush();
 
     cout << "MW-AHRSv1 communication port is ready\n";
 
@@ -172,18 +151,15 @@ public:
 
   void closeSensor()
   {
-    // ser->close();
-    ser->Close();
+    ser->close();
     cout << "Closing MW-AHRSv1 Sensor" << endl;
   }
 
   bool requestData()
   {
-    // const uint8_t tx_once[] = "ss=7\r\n";
-    const std::string tx_once = "ss=7\r\n";
+    const uint8_t tx_once[] = "ss=7\r\n";
 
-    // ser->write(tx_once, sizeof(tx_once));
-    ser->Write(tx_once);
+    ser->write(tx_once, sizeof(tx_once));
 
     return true;
   }
@@ -195,14 +171,9 @@ public:
 
     memset(rx_packet, '\0', sizeof(rx_packet));
 
-    // rx_size = ser->available();
-    rx_size = ser->GetNumberOfBytesAvailable();
-    // if (rx_size) {
-    //   rx_size = ser->read(rx_packet, rx_size);
-    // }
+    rx_size = ser->available();
     if (rx_size) {
-      ser->Read(rx_string, rx_size, SERIAL_TIMEOUT_MS);
-      memcpy(rx_packet, rx_string.c_str(), rx_size);
+      rx_size = ser->read(rx_packet, rx_size);
     }
 
     for (int i=0; i<rx_size; i++) {
@@ -781,6 +752,8 @@ int main(int argc, char* argv[]) {
   }
 
   sensor.closeSensor();
+
+  rclcpp::shutdown();
 
   return 0;
 }

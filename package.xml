@@ -5,9 +5,11 @@
   <version>0.0.0</version>
   <description>mw_ahrsv1</description>
   <maintainer email="kajuha@gmail.com">kajuha</maintainer>
-  <license>TODO</license>
+  <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>serial</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
