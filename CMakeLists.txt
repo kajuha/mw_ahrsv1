@@ -24,9 +24,10 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(serial REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(mw_ahrsv1 src/mw_ahrsv1.cpp)
-ament_target_dependencies(mw_ahrsv1 rclcpp std_msgs sensor_msgs serial)
+ament_target_dependencies(mw_ahrsv1 rclcpp std_msgs sensor_msgs serial tf2_geometry_msgs)
 
 install(TARGETS
   mw_ahrsv1
